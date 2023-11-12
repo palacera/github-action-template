@@ -1,0 +1,35 @@
+name: 'Hello World'
+description: ''
+author: ''
+branding:
+  icon: 'globe'
+  color: 'blue'
+inputs:
+  person-name:
+    description: 'Name of person to say hello to.'
+    required: false
+    default: 'World'
+outputs:
+  hello-text:
+    description: 'Text that displays hello.'
+    value: ${{ steps.say-hello.outputs.output-text }}
+runs:
+  using: 'composite'
+  steps:
+    - name: Checkout action repository
+      uses: actions/checkout@v4
+
+    - name: Say hello
+      id: say-hello
+      env:
+        NAME: ${{ inputs.person-name }}
+      shell: bash
+      run: |
+        if [[ -n "$NAME" && "$NAME" =~ ^[A-Za-z\ ]+$ ]]; then
+          echo "output-text=Hello $NAME!" >> $GITHUB_OUTPUT
+        elif [ -z "$NAME" ]; then
+          echo "output-text=Hello World!" >> $GITHUB_OUTPUT
+        else
+          echo "::error ::Invalid Name"  # Error annotation
+          exit 1
+        fi

@@ -1,0 +1,53 @@
+name: 'Pull Request'
+
+on:
+  pull_request:
+    branches: [ 'develop', 'main' ]
+  workflow_dispatch:
+jobs:
+  run-action-tests:
+    strategy:
+      matrix:
+        config: [
+          {
+            name: 'default response',
+            person-name: '',
+            expected-output: 'Hello World!',
+            expected-outcome: 'success'
+          },
+          {
+            name: 'valid response',
+            person-name: 'Peter Parker',
+            expected-output: 'Hello Peter Parker!',
+            expected-outcome: 'success'
+          },
+          {
+            name: 'invalid response',
+            person-name: '123',
+            expected-output: '',
+            expected-outcome: 'failure'
+          }
+        ]
+    runs-on: ubuntu-latest
+    name: Test ${{ matrix.config.name }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run action
+        uses: ./
+        id: say-hello
+        with:
+          person-name: ${{ matrix.config.person-name }}
+        continue-on-error: true
+
+      - name: Test output
+        env:
+          ACTUAL_VALUE: ${{ steps.say-hello.outputs.hello-text }}
+          EXPECTED_VALUE: ${{ matrix.config.expected-output }}
+          EXPECTED_OUTCOME: ${{ matrix.config.expected-outcome }}
+        shell: bash
+        run: |
+          source ./scripts/assertions.sh
+          assert_equal "$EXPECTED_VALUE" "$ACTUAL_VALUE"
+          assert_equal "$EXPECTED_OUTCOME" "${{ steps.say-hello.outcome }}"
